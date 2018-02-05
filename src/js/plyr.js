@@ -10,18 +10,19 @@
 (function(root, factory) {
     'use strict';
     /*global define,module*/
-
-    if (typeof module === 'object' && typeof module.exports === 'object') {
-        // Node, CommonJS-like
-        module.exports = factory(root, document);
-    } else if (typeof define === 'function' && define.amd) {
-        // AMD
-        define([], function() {
-            return factory(root, document);
-        });
-    } else {
-        // Browser globals (root is window)
-        root.plyr = factory(root, document);
+    if(typeof window !== 'undefined') {
+      if (typeof module === 'object' && typeof module.exports === 'object') {
+          // Node, CommonJS-like
+          module.exports = factory(root, document);
+      } else if (typeof define === 'function' && define.amd) {
+          // AMD
+          define([], function() {
+              return factory(root, document);
+          });
+      } else {
+          // Browser globals (root is window)
+          root.plyr = factory(root, document);
+      }
     }
 })(typeof window !== 'undefined' ? window : this, function(window, document) {
     'use strict';
@@ -2229,11 +2230,6 @@
 
         // Toggle fullscreen
         function _toggleFullscreen(event) {
-            // We don't allow fullscreen on audio player
-            if (plyr.type === 'audio') {
-              return
-            }
-
             // Check for native support
             var nativeSupport = fullscreen.supportsFullScreen;
 
@@ -3198,9 +3194,6 @@
             // Fullscreen
             _proxyListener(plyr.buttons.fullscreen, 'click', config.listeners.fullscreen, _toggleFullscreen);
 
-            // Toggle fullscreen when user double clicks on video wrapper
-            _proxyListener(plyr.container, 'dblclick', config.listeners.fullscreen, _toggleFullscreen);
-
             // Handle user exiting fullscreen by escaping etc
             if (fullscreen.supportsFullScreen) {
                 _on(document, fullscreen.fullScreenEventName, _toggleFullscreen);
@@ -3944,18 +3937,20 @@
 // Custom event polyfill
 // https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent
 (function() {
-    if (typeof window.CustomEvent === 'function') {
-        return;
+    if(typeof window !== 'undefined') {
+      if (typeof window.CustomEvent === 'function') {
+          return;
+      }
+
+      function CustomEvent(event, params) {
+          params = params || { bubbles: false, cancelable: false, detail: undefined };
+          var evt = document.createEvent('CustomEvent');
+          evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+          return evt;
+      }
+
+      CustomEvent.prototype = window.Event.prototype;
+
+      window.CustomEvent = CustomEvent;
     }
-
-    function CustomEvent(event, params) {
-        params = params || { bubbles: false, cancelable: false, detail: undefined };
-        var evt = document.createEvent('CustomEvent');
-        evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
-        return evt;
-    }
-
-    CustomEvent.prototype = window.Event.prototype;
-
-    window.CustomEvent = CustomEvent;
 })();
